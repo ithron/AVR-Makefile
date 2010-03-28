@@ -1,0 +1,13 @@
+A Makefile template for building and programming projects for the AVR microcontroller family.
+
+Dependencies:
+	AVRFuseExtractor <http://github.com/ithron/AVRFuseExtractor>
+	avrdude <http://www.nongnu.org/avrdude>
+	avr-libc with the full toolchain <http://www.nongnu.org/avr-libc>
+
+Some of the targets are:
+
+	all - build everything and create ihex ROM images (flash + eeprom)
+	program - program the device using avrdude
+	install - program the device + fuse bytes
+	erase - perform a chip erase
