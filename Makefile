@@ -148,7 +148,7 @@ CFLAGS		+= $(DEBUG) $(WARN) -O$(OPTIMIZE) -mmcu=$(MCU) \
 ASFLAGS		+= -mmcu=$(MCU) -DF_CPU=$(FREQ)UL -I. \
 					-Wa,-adhlns=$(<:.S=.lst),-gstabs
 					
-LDFLAGS		+= -Wl-Map,$(PROJECT).map,--cref # Create a map file
+LDFLAGS		+= -Wl,-Map,$(PROJECT).map,--cref # Create a map file
 
 OBJECTS		= $(C_SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
 
