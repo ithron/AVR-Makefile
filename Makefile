@@ -186,6 +186,7 @@ clean:
 	$(RM) $(PROJECT).hex
 	$(RM) $(PROJECT)_eeprom.hex
 	$(RM) $(PROJECT).lst
+	$(RM) $(PROJECT).map
 	$(RM) -r .dep
 	
 wfuse: $(PROJECT).elf
