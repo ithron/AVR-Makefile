@@ -127,6 +127,11 @@ AVRDUDE		= avrdude
 # TARGETS
 ##########
 
+nullstring := 
+space := $(nullstring) 
+QUOTED_SOURCE_ROOT=$(subst $(space),\ ,$(SOURCE_ROOT))
+QUOTED_OBJECT_FILE_DIR=$(subst $(space),\ ,$(OBJECT_FILE_DIR))
+
 all: build lst hex size
 hex : fhex ehex
 install: program wfuse
@@ -172,10 +177,10 @@ fuse: $(PROJECT).elf
 	|| { echo empty $@ not generated; exit 0; }
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $(subst $(space),\ ,$(SOURCE_ROOT)/$<)
 	
 %.o: %.S
-	$(CC) $(ASFLAGS) -c -o $@ $<
+	$(CC) $(ASFLAGS) -c -o $@ $(subst $(space),\ ,$(SOURCE_ROOT)/$<)
 	
 $(PROJECT).elf: $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
