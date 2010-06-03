@@ -88,11 +88,11 @@ LDFLAGS		=
 STD			= gnu99
 
 ifndef SOURCE_ROOT
-	SOURCE_ROOT = ./
+	SOURCE_ROOT = .
 endif
 
 ifndef OBJECT_FILE_DIR
-	OBJECT_FILE_DIR = ./
+	OBJECT_FILE_DIR = .
 endif
 
 
