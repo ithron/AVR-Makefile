@@ -161,7 +161,7 @@ CFLAGS		+= $(DEBUG) $(WARN) -O$(OPTIMIZE) -mmcu=$(MCU) \
 ASFLAGS		+= -mmcu=$(MCU) -DF_CPU=$(FREQ)UL -I. \
 					-Wa,-adhlns=$(<:.S=.lst),-gstabs
 					
-LDFLAGS		+= -Wl,-Map,$(PROJECT).map,--cref # Create a map file
+LDFLAGS		+= -Map $(PROJECT).map --cref # Create a map file
 
 OBJECTS		= $(C_SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
 
@@ -191,7 +191,7 @@ fuse: $(PROJECT).elf
 	$(CC) $(ASFLAGS) -c -o $@ $(subst $(space),\ ,$(SOURCE_ROOT)/$<)
 	
 $(PROJECT).elf: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 	
 clean:
 	$(RM) $(OBJECTS)
