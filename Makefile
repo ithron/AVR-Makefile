@@ -88,11 +88,11 @@ LDFLAGS		=
 STD			= gnu99
 
 ifndef SOURCE_ROOT
-	SOURCE_ROOT = .
+	SOURCE_ROOT = src
 endif
 
 ifndef OBJECT_FILE_DIR
-	OBJECT_FILE_DIR = .
+	OBJECT_FILE_DIR = build
 endif
 
 
@@ -137,8 +137,8 @@ AVRDUDE		= avrdude
 
 nullstring := 
 space := $(nullstring) 
-QUOTED_SOURCE_ROOT=$(subst $(space),\ ,$(SOURCE_ROOT))
-QUOTED_OBJECT_FILE_DIR=$(subst $(space),\ ,$(OBJECT_FILE_DIR))
+QUOTED_SOURCE_ROOT=$(subst $(space),\ ,$(strip $(SOURCE_ROOT)))
+QUOTED_OBJECT_FILE_DIR=$(subst $(space),\ ,$(strip $(OBJECT_FILE_DIR)))
 
 all: build lst hex size
 hex : fhex ehex
@@ -149,6 +149,7 @@ fhex: $(PROJECT).hex
 ehex: $(PROJECT)_eeprom.hex
 build: $(PROJECT).elf
 
+
 ######
 
 AVRDUDE_ARGS += -p $(PROG_MCU) -c $(PROGRAMMER) -P $(PORT)
@@ -156,54 +157,56 @@ AVRDUDE_ARGS += -p $(PROG_MCU) -c $(PROGRAMMER) -P $(PORT)
 CFLAGS		+= $(DEBUG) $(WARN) -O$(OPTIMIZE) -mmcu=$(MCU) \
 					-std=$(STD) $(DEFS) -I. \
 					-DF_CPU=$(FREQ)UL \
-					-MD -MP -MF .dep/$(@F).d # Generate dependencies
+					-MD -MP -MF $(QUOTED_OBJECT_FILE_DIR)/.dep/$(@F).d # Generate dependencies
 					
 ASFLAGS		+= -mmcu=$(MCU) -DF_CPU=$(FREQ)UL -I. \
 					-Wa,-adhlns=$(<:.S=.lst),-gstabs
 					
-LDFLAGS		+= -Map $(PROJECT).map --cref # Create a map file
+LDFLAGS		+= -Map $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).map --cref # Create a map file
 
-OBJECTS		= $(C_SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
+OBJECTS	= $(foreach object, $(C_SOURCES:.c=.o) $(ASM_SOURCES:.S=.o), $(subst $(space),\ ,$(strip $(OBJECT_FILE_DIR)/$(object))))
 
 %.lst: %.elf
-	$(OBJDUMP) -h -S $< > $@
+	$(OBJDUMP) -h -S $(QUOTED_OBJECT_FILE_DIR)/$< > $(QUOTED_OBJECT_FILE_DIR)/$@
 
 size: $(PROJECT).elf
 	@echo
-	@$(SIZE) $<
+	@$(SIZE) $(QUOTED_OBJECT_FILE_DIR)/$<
 
 fuse: $(PROJECT).elf
-	@echo "low `$(EXTFUSE) l $<`"
-	@echo "high `$(EXTFUSE) h $<`"
-	@echo "extended `$(EXTFUSE) e $<`"
+	@echo "low `$(EXTFUSE) l $(QUOTED_OBJECT_FILE_DIR)/$<`"
+	@echo "high `$(EXTFUSE) h $(QUOTED_OBJECT_FILE_DIR)/$<`"
+	@echo "extended `$(EXTFUSE) e $(QUOTED_OBJECT_FILE_DIR)/$<`"
 
 %.hex: %.elf
-	$(OBJCOPY) -j .text -j .data -O ihex $< $@
+	$(OBJCOPY) -j .text -j .data -O ihex $(QUOTED_OBJECT_FILE_DIR)/$< $(QUOTED_OBJECT_FILE_DIR)/$@
 	
 %_eeprom.hex: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ \
-	|| { echo empty $@ not generated; exit 0; }
+	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $(QUOTED_OBJECT_FILE_DIR)/$< $(QUOTED_OBJECT_FILE_DIR)/$@ \
+	|| { echo empty $(QUOTED_OBJECT_FILE_DIR)/$@ not generated; exit 0; }
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $(subst $(space),\ ,$(SOURCE_ROOT)/$<)
+$(QUOTED_OBJECT_FILE_DIR)/%.o :$(QUOTED_SOURCE_ROOT)/%.c
+	$(CC) $(CFLAGS) -c -o $(subst $(space),\ ,$(abspath $@)) $(subst $(space),\ ,$(abspath $<))
+
 	
-%.o: %.S
-	$(CC) $(ASFLAGS) -c -o $@ $(subst $(space),\ ,$(SOURCE_ROOT)/$<)
+$(QUOTED_OBJECT_FILE_DIR)/%.o :$(QUOTED_SOURCE_ROOT)/%.S
+	$(CC) $(ASFLAGS) -c -o $(subst $(space),\ ,$(abspath $@)) $(subst $(space),\ ,$(abspath $<))
+
 	
 $(PROJECT).elf: $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LD) $(LDFLAGS) -o $(QUOTED_OBJECT_FILE_DIR)/$@ $^ $(LIBS)
 	
 clean:
 	$(RM) $(OBJECTS)
-	$(RM) $(PROJECT).elf
-	$(RM) $(PROJECT).hex
-	$(RM) $(PROJECT)_eeprom.hex
-	$(RM) $(PROJECT).lst
-	$(RM) $(PROJECT).map
-	$(RM) -r .dep
+	$(RM) $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).elf
+	$(RM) $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).hex
+	$(RM) $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT)_eeprom.hex
+	$(RM) $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).lst
+	$(RM) $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).map
+	$(RM) -r $(QUOTED_OBJECT_FILE_DIR)/.dep
 	
 wfuse: $(PROJECT).elf
-	$(AVRDUDE) -p $(PROG_MCU) -c $(PROGRAMMER) -P $(PORT) `$(EXTFUSE) avrdude $<`
+	$(AVRDUDE) -p $(PROG_MCU) -c $(PROGRAMMER) -P $(PORT) `$(EXTFUSE) avrdude $(QUOTED_OBJECT_FILE_DIR)/$<`
 
 rfuse:
 	$(AVRDUDE) -p $(PROG_MCU) -c $(PROGRAMMER) -P $(PORT) \
@@ -211,11 +214,11 @@ rfuse:
 		
 program: $(PROJECT).hex $(PROJECT)_eeprom.hex
 	$(AVRDUDE) $(AVRDUDE_ARGS) \
-		-U flash:w:$(PROJECT).hex \
-		-U eeprom:w:$(PROJECT)_eeprom.hex
+		-U flash:w:$(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).hex \
+		-U eeprom:w:$(QUOTED_OBJECT_FILE_DIR)/$(PROJECT)_eeprom.hex
 	
 erase:
 	$(AVRDUDE) $(AVRDUDE_ARGS) -e
 
 # Include dependency files
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(shell mkdir -p $(QUOTED_OBJECT_FILE_DIR)/.dep 2>/dev/null) $(wildcard $(QUOTED_OBJECT_FILE_DIR)/.dep/*)
