@@ -162,9 +162,12 @@ CFLAGS		+= $(DEBUG) $(WARN) -O$(OPTIMIZE) -mmcu=$(MCU) \
 ASFLAGS		+= -mmcu=$(MCU) -DF_CPU=$(FREQ)UL -I. \
 					-Wa,-adhlns=$(<:.S=.lst),-gstabs
 					
-LDFLAGS		+= -Map $(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).map --cref # Create a map file
+LDFLAGS		+= -Wl,-Map,$(QUOTED_OBJECT_FILE_DIR)/$(PROJECT).map,--cref # Create a map file
 
 OBJECTS	= $(foreach object, $(C_SOURCES:.c=.o) $(ASM_SOURCES:.S=.o), $(subst $(space),\ ,$(strip $(OBJECT_FILE_DIR)/$(object))))
+
+compile: $(OBJECTS)
+link: $(PROJECT).elf
 
 %.lst: %.elf
 	$(OBJDUMP) -h -S $(QUOTED_OBJECT_FILE_DIR)/$< > $(QUOTED_OBJECT_FILE_DIR)/$@
@@ -194,7 +197,7 @@ $(QUOTED_OBJECT_FILE_DIR)/%.o :$(QUOTED_SOURCE_ROOT)/%.S
 
 	
 $(PROJECT).elf: $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $(QUOTED_OBJECT_FILE_DIR)/$@ $^ $(LIBS)
+	$(CC) -mmcu=$(MCU) $(LDFLAGS) -o $(QUOTED_OBJECT_FILE_DIR)/$@ $^ $(LIBS)
 	
 clean:
 	$(RM) $(OBJECTS)
