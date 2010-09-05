@@ -147,7 +147,7 @@ install: program wfuse
 lst: $(PROJECT).lst
 fhex: $(PROJECT).hex
 ehex: $(PROJECT)_eeprom.hex
-build: $(PROJECT).elf
+build: compile link
 
 
 ######
